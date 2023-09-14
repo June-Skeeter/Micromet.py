@@ -9,13 +9,13 @@ Each application is in a separate folder, and each was created in a separate vir
     * See the instructions below to create a generic virtual environment with pip
 ## Create a virtual environment
 
-These steps are meant to be run via command line from **within** the specific application folder, e.g., Bioment.Net/Footprint_Analysis
+These steps are meant to be run via command line from **within** the specific application folder, e.g., Bioment.Net/Biomet_Database_Functions
 
 ### Using Visual Studio (VS) Code
 
 If you have VS Code installed, with the python extension, you can:
 
-1. Open to the given application folder, eg. Bioment.Net/Footprint_Analysis
+1. Open to the given application folder, eg. Bioment.Net/Biomet_Database_Functions
 2. Hit ctrl + shift + p > and select "Create Python Environment"
     * Use Venv, not conda
 3. You will be prompted to select dependencies to install
@@ -23,23 +23,21 @@ If you have VS Code installed, with the python extension, you can:
 
 ### Windows setup
 
-This assumes you have Biomet.net installed in "C:\"
+This assumes you have Micromet.py installed in "C:\"
 
-1. cd C:\Biomet.net\Python\Footprint_Analysis\
+1. cd C:\Micromet.py\Python\Biomet_Database_Functions\
 
 2. py -m venv .venv
 
-3. .venv\Scripts\activate
+3. .\.venv\Scripts\activate
 
 4. pip install -r requirements.txt
 
-
 ### macOS/Linux setup
 
-This assumes you have Biomet.net installed in "/home/"
+This assumes you have Micromet.py installed in "/home/"
 
-
-1. cd /home/Biomet.net/Python/Footprint_Analysis/
+1. cd /home/Micromet.py/Python/Biomet_Database_Functions/
 
 2.  python3 -m venv .venv
 
@@ -49,7 +47,7 @@ This assumes you have Biomet.net installed in "/home/"
 
 # Creating a New Application
 
-1. Create a new folder in Biomet.Net/Python
+1. Create a new folder in Micromet.py/Python
 
 2. Create a new virtual environment following the steps outlined above, **without** installing the requirements.txt
 
@@ -57,7 +55,7 @@ This assumes you have Biomet.net installed in "/home/"
 
 4. Write a README.md file :D
 
-5. Push to you own branch of Biomet.Net on github
+5. Push to you own branch of Micromet.py on github
 
 # Updating Existing Applications
 
