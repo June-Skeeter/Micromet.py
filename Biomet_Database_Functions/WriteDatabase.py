@@ -7,15 +7,12 @@ import datetime
 
 class MakeTraces():
 
-    def __init__(self):
+    def __init__(self,ini='WriteTraces.ini'):
                
         # Create a config file based on the job (Write vs. Read; standard vs. custom)
-        config = configparser.ConfigParser()
-        config.read('ini/config.ini')
         self.ini = configparser.ConfigParser()
-        self.ini.read(config['Write']['ini'])
-        self.ini['Database'] = config['Database']
-        self.ini['Datadump'] = config['Datadump']
+        self.ini.read('../MicrometPy.ini')
+        self.ini.read(ini)
 
         # Loop through sites
         Sites =  self.ini['Input']['Sites'].split(',')
@@ -24,21 +21,22 @@ class MakeTraces():
                 self.findMet()
 
     def findMet(self):
-        pattern = self.ini[self.Match_File]['Pattern']
+        patterns = self.ini[self.Match_File]['Patterns'].split(',')
 
         self.Met = pd.DataFrame()
         self.Metadata = pd.DataFrame()
-        for dir,_,files in os.walk(self.ini['Datadump']['Path'].replace('SITE',self.site)):
+        for dir,_,files in os.walk(self.ini['Paths']['datadump'].replace('SITE',self.site)):
             for file in (files):
-                if pattern in file:
+                fn = f"{dir}/{file}"
+                if len([p for p in patterns if p not in fn])==0:
                     if self.ini[self.Match_File]['Subtable_id'] == '':
-                        self.readSingle(f"{dir}/{file}")
+                        self.readSingle(fn)
                     else:
-                        self.readSubTables(f"{dir}/{file}")
-                    
-        self.Metadata = self.Metadata.drop(columns=self.ini[self.Match_File]['Exclude'].split(','))     
+                        self.readSubTables(fn)
         self.dateIndex()
-        self.Met = self.Met.drop(columns=self.ini[self.Match_File]['Exclude'].split(','))
+        if self.ini[self.Match_File]['Exclude'] != '':
+            self.Metadata = self.Metadata.drop(columns=self.ini[self.Match_File]['Exclude'].split(','))     
+            self.Met = self.Met.drop(columns=self.ini[self.Match_File]['Exclude'].split(','))
         self.FullYear()
 
     def readSingle(self,fn):
@@ -114,7 +112,7 @@ class MakeTraces():
         for self.y in self.Met.index.year.unique():
             self.Year = pd.DataFrame(data={'Timestamp':pd.date_range(start = f'{self.y}01010030',end=f'{self.y+1}01010001',freq='30T')})
             self.Year = self.Year.set_index('Timestamp')
-            self.Year = self.Year.join(self.Met,how='outer')
+            self.Year = self.Year.join(self.Met)
             
             d_1970 = datetime.datetime(1970,1,1,0,0)
             self.Year['Floor'] = self.Year.index.floor('D')
@@ -123,10 +121,14 @@ class MakeTraces():
 
             self.Year[self.ini['Database']['Timestamp']] = self.Year['Secs']+self.Year['Days']
             self.Year = self.Year.drop(columns=['Floor','Secs','Days'])
-            self.Write('Met')
+            self.Write()
 
-    def Write(self,Trace_type):
-        self.write_dir = self.ini['Database']['Path'].replace('YEAR',str(self.y)).replace('SITE',self.site)+Trace_type
+    def Write(self):
+        self.write_dir = self.ini['Paths']['database'].replace('YEAR',str(self.y)).replace('SITE',self.site)+self.ini[self.Match_File]['subfolder']
+
+        if os.path.isdir(self.write_dir)==False:
+            print('Creating new directory at:\n', self.write_dir)
+            os.makedirs(self.write_dir)
 
         for T in self.Year.columns:
             if T == self.ini['Database']['Timestamp']:
@@ -140,28 +142,16 @@ class MakeTraces():
                 Trace.tofile(out)
         
 if __name__ == '__main__':
-    # If called from command line ...
+    file_path = os.path.split(__file__)[0]
+    os.chdir(file_path)
+
     CLI=argparse.ArgumentParser()
     CLI.add_argument(
     "--ini",  # name on the CLI - drop the `--` for positional/required parameters
     nargs=1,  # 0 or more values expected => creates a list
     type=str,
-    default='ini/config.ini',  # default if nothing is provided
+    default='WriteTraces.ini',  # default if nothing is provided
     )
-    CLI.add_argument(
-    "--sites", 
-    nargs='+', 
-    type=str,
-    default=['BB','BB2','BBS','RBM','DSM','HOGG','YOUNG'],
-    )
-
-    CLI.add_argument(
-    "--years",
-    nargs='+',
-    type=int,  
-    default=[],
-    )
-    # parse the command line
+    
     args = CLI.parse_args()
-
-    MakeTraces(args.ini,args.sites,args.years)
+    MakeTraces(args.ini)

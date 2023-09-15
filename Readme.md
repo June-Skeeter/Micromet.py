@@ -15,7 +15,7 @@ These steps are meant to be run via command line from **within** the specific ap
 
 If you have VS Code installed, with the python extension, you can:
 
-1. Open to the given application folder, eg. Bioment.Net/Biomet_Database_Functions
+1. Open the Micromet.py folder in VS Code
 2. Hit ctrl + shift + p > and select "Create Python Environment"
     * Use Venv, not conda
 3. You will be prompted to select dependencies to install
@@ -25,25 +25,25 @@ If you have VS Code installed, with the python extension, you can:
 
 This assumes you have Micromet.py installed in "C:\"
 
-1. cd C:\Micromet.py\Python\Biomet_Database_Functions\
+1. cd C:\Micromet.py\
 
 2. py -m venv .venv
 
 3. .\.venv\Scripts\activate
 
-4. pip install -r requirements.txt
+4. pip install -r .\requirements.txt
 
 ### macOS/Linux setup
 
 This assumes you have Micromet.py installed in "/home/"
 
-1. cd /home/Micromet.py/Python/Biomet_Database_Functions/
+1. cd /home/Micromet.py/
 
-2.  python3 -m venv .venv
+2. python3 -m venv .venv
 
-3. source .venv/bin/activate
+3. source ./.venv/bin/activate
 
-4. pip install -r requirements.txt
+4. pip install -r ./requirements.txt
 
 # Creating a New Application
 

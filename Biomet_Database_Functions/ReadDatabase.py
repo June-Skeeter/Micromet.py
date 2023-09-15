@@ -8,14 +8,11 @@ import datetime
 
 class MakeCSV():
 
-    def __init__(self,Sites,Years):
-
+    def __init__(self,Sites,Years,ini='ReadTraces.ini'):
         # Create a config file based on the job (Write vs. Read; standard vs. custom)
-        config = configparser.ConfigParser()
-        config.read('ini/config.ini')
         self.ini = configparser.ConfigParser()
-        self.ini.read(config['Read']['ini'])
-        self.ini['Database'] = config['Database']
+        self.ini.read('../MicrometPy.ini')
+        self.ini.read(ini)
 
         for Site in Sites:
             self.Site = Site
@@ -26,7 +23,7 @@ class MakeCSV():
                     self.AllData = pd.DataFrame()
                 for Year in Years:
                     self.Year = Year
-                    if os.path.exists(self.sub(self.ini['Database']['Path'])+self.ini[self.Request]['Stage']):
+                    if os.path.exists(self.sub(self.ini['Paths']['database'])+self.ini[self.Request]['Stage']):
                         self.readDB()
                     else:
                         pass
@@ -35,50 +32,56 @@ class MakeCSV():
                     
     def readDB(self):
         self.getTime()
-        # for self.Request in self.ini['Output']['self.Requests'].split(','):
-        self.traces = self.ini[self.Request]['Traces'].split(',')
-        D_traces = self.readTrace()
-        self.Data = pd.DataFrame(index=self.Time_Trace,data=D_traces)
-        self.Data[self.ini[self.Request]['Timestamp']] = self.Data.index.floor('Min').strftime(self.ini[self.Request]['Timestamp_FMT'])
-        self.traces.insert(0,self.ini[self.Request]['Timestamp'])
-        rn = {}
-        for renames in self.ini[self.Request]['Rename'].split(' '):
-            r = renames.split('|')
-            if len(r)>1:
-                rn[r[0]]=r[1]
-        self.Data = self.Data.rename(columns=rn)
-        if self.ini[self.Request]['by_Year']=='True':
-            self.AllData = self.Data
-            self.write()
-        else:
-            self.AllData = pd.concat([self.AllData,self.Data])
+        if self.skip_Flag == False:
+            # for self.Request in self.ini['Output']['self.Requests'].split(','):
+            self.traces = self.ini[self.Request]['Traces'].split(',')
+            D_traces = self.readTrace()
+            self.Data = pd.DataFrame(index=self.Time_Trace,data=D_traces)
+            self.Data[self.ini[self.Request]['Timestamp']] = self.Data.index.floor('Min').strftime(self.ini[self.Request]['Timestamp_FMT'])
+            self.traces.insert(0,self.ini[self.Request]['Timestamp'])
+            rn = {}
+            for renames in self.ini[self.Request]['Rename'].split(' '):
+                r = renames.split('|')
+                if len(r)>1:
+                    rn[r[0]]=r[1]
+            self.Data = self.Data.rename(columns=rn)
+            if self.ini[self.Request]['by_Year']=='True':
+                self.AllData = self.Data
+                self.write()
+            else:
+                self.AllData = pd.concat([self.AllData,self.Data])
 
     def getTime(self):
         Timestamp = self.ini['Database']['Timestamp']
         Timestamp_alt = self.ini['Database']['Timestamp']
-        filename = self.sub(self.ini['Database']['Path'])+self.ini[self.Request]['Stage']+Timestamp
-        filename_alt = self.sub(self.ini['Database']['Path'])+self.ini[self.Request]['Stage']+Timestamp_alt
-        try:
-            with open(filename, mode='rb') as file:
-                Time_Trace = np.fromfile(file, self.ini['Database']['Timestamp_dtype'])
-        except:
-            with open(filename_alt, mode='rb') as file:
-                Time_Trace = np.fromfile(file, self.ini['Database']['Timestamp_dtype'])
-            pass
-        if self.ini['Database']['Timestamp_fmt'] == 'datenum':
-            base = float(self.ini['Database']['datenum_base'])
-            unit = self.ini['Database']['datenum_base_unit']
-            self.Time_Trace_Num = Time_Trace+0
-            self.Time_Trace = pd.to_datetime(Time_Trace-base,unit=unit).round('T')
+        filename = self.sub(self.ini['Paths']['database'])+self.ini[self.Request]['Stage']+Timestamp
+        filename_alt = self.sub(self.ini['Paths']['database'])+self.ini[self.Request]['Stage']+Timestamp_alt
+        if os.path.isfile(filename)+os.path.isfile(filename_alt) == 0:
+            self.skip_Flag = True
+
         else:
-            # Datenum is depreciated and we should consider upgrading
-            warning = 'Revise code for new timestamp format'
-            sys.exit(warning)
+            try:
+                with open(filename, mode='rb') as file:
+                    Time_Trace = np.fromfile(file, self.ini['Database']['Timestamp_dtype'])
+            except:
+                with open(filename_alt, mode='rb') as file:
+                    Time_Trace = np.fromfile(file, self.ini['Database']['Timestamp_dtype'])
+                pass
+            if self.ini['Database']['Timestamp_fmt'] == 'datenum':
+                base = float(self.ini['Database']['datenum_base'])
+                unit = self.ini['Database']['datenum_base_unit']
+                self.Time_Trace_Num = Time_Trace+0
+                self.Time_Trace = pd.to_datetime(Time_Trace-base,unit=unit).round('T')
+            else:
+                # Datenum is depreciated and we should consider upgrading
+                warning = 'Revise code for new timestamp format'
+                sys.exit(warning)
+            self.skip_Flag=False
 
     def readTrace(self):
         D_traces = {}
         for Trace_Name in self.traces:
-            filename = self.sub(self.ini['Database']['Path'])+self.ini[self.Request]['Stage']+Trace_Name
+            filename = self.sub(self.ini['Paths']['database'])+self.ini[self.Request]['Stage']+Trace_Name
             try:
                 with open(filename, mode='rb') as file:
                     trace = np.fromfile(file, self.ini['Database']['Trace_dtype'])
@@ -115,6 +118,10 @@ class MakeCSV():
 
         
 if __name__ == '__main__':
+    
+    file_path = os.path.split(__file__)[0]
+    os.chdir(file_path)
+
     # If called from command line ...
     CLI=argparse.ArgumentParser()
 
@@ -133,5 +140,4 @@ if __name__ == '__main__':
     )
     # parse the command line
     args = CLI.parse_args()
-
     MakeCSV(args.sites,args.years)

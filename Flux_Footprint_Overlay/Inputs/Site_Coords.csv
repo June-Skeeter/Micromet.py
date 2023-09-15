@@ -1,0 +1,6 @@
+index,name,Zm,bearing,lat,lon,canopy_height,Basemap,Basemap_Class
+BBS,Burns Bog Seedling,4.75,174,49.1377624,-122.9947897,4.75,Inputs/BBECA_Eco_Classification.geojson,Class
+BB,Burns Bog 1,1.8,166,49.129344,-122.984902,0.30,Inputs/BBECA_Eco_Classification.geojson,Class
+BB2,Burns Bog 2,2.85,180,49.119038,-122.99517,0.65,Inputs/BBECA_Eco_Classification.geojson,Class
+DSM,Delta Salt Marsh,1.83,195,49.088835,-122.895226,0.16,,
+RBM,Richmond Brackish Marsh,4.0,180,49.131267,-123.196356,1.5,,
