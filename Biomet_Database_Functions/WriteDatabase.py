@@ -32,6 +32,7 @@ class MakeTraces():
                     if self.ini[self.Match_File]['Subtable_id'] == '':
                         self.readSingle(fn)
                     else:
+                        
                         self.readSubTables(fn)
         self.dateIndex()
         if self.ini[self.Match_File]['Exclude'] != '':

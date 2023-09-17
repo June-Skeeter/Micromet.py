@@ -23,7 +23,7 @@ if MicrometPy not in sys.path:
 from Biomet_Database_Functions import WriteDatabase
 os.chdir(file_path)
 
-class extractNARR():
+class PointSampleNARR():
     
     def __init__(self,Site,Years,verbose=0):
         # Create a config file based on the job (Write vs. Read; standard vs. custom)
@@ -67,26 +67,28 @@ class extractNARR():
 
 
         for self.var_name in Vars:
-            # try:
-            self.Trace = pd.read_csv(f'{self.out_dir}/{self.var_name}.csv',
-                            parse_dates=[self.ini['Site_Info']['timestamp']],
-                            index_col=self.ini['Site_Info']['timestamp']
-                            )
-            YD=self.Trace.resample('Y')[self.var_name].count()
-            YD=list(YD.loc[YD>365*48 - 31*48].index.year)
+            if os.path.isfile(f'{self.out_dir}/{self.var_name}.csv'):
+                self.Trace = pd.read_csv(f'{self.out_dir}/{self.var_name}.csv',
+                                parse_dates=[self.ini['Site_Info']['timestamp']],
+                                index_col=self.ini['Site_Info']['timestamp']
+                                )
+            else:
+                self.Trace = pd.DataFrame()
+            # YD=self.Trace.resample('Y')[self.var_name].count()
+            # YD=list(YD.loc[YD>365*48 - 31*48].index.year)
 
-            ###########################################################################################################
-            ###########################################################################################################
-            ###########################################################################################################
-            Years.remove(2023)
-            ###########################################################################################################
-            ###########################################################################################################
-            ###########################################################################################################
+            # ###########################################################################################################
+            # ###########################################################################################################
+            # ###########################################################################################################
+            # Years.remove(2023)
+            # ###########################################################################################################
+            # ###########################################################################################################
+            # ###########################################################################################################
             
 
-            for y in YD:
-                if y in Years:
-                    Years.remove(y)
+            # for y in YD:
+            #     if y in Years:
+            #         Years.remove(y)
 
             for self.year in Years:
                 if self.year >=1979 & self.year <= datetime.datetime.now().year:
@@ -163,13 +165,11 @@ class extractNARR():
         lon_box = self.lon[self.y_bounds[0]:self.y_bounds[1],self.x_bounds[0]:self.x_bounds[1]]
         lat_box = self.lat[self.y_bounds[0]:self.y_bounds[1],self.x_bounds[0]:self.x_bounds[1]]
 
-        
         m = folium.Map(location=[self.Site.geometry.y[0],self.Site.geometry.x[0]])   
         for at,on in zip (lat_box.flatten(),lon_box.flatten()):
             folium.Marker([at, on]).add_to(m)
         folium.CircleMarker([self.Site.geometry.y[0],self.Site.geometry.x[0]],popup=self.site).add_to(m)
         m.save(f'{self.ini["Downloads"]["nc_path"]}/{self.Site.name[0]}_{self.var_name}_grid_pts.html')
-
 
         self.x_clip = self.x[self.x_bounds[0]:self.x_bounds[1]]
         self.y_clip = self.y[self.y_bounds[0]:self.y_bounds[1]]
@@ -179,7 +179,6 @@ class extractNARR():
         self.var_clip = self.var[:,self.y_bounds[0]:self.y_bounds[1],self.x_bounds[0]:self.x_bounds[1]]
 
         self.coords = np.array([self.Site.geometry.x[0:],self.Site.geometry.y[0:]]).T
-
             
         TS = pd.DataFrame()
         TS[self.ini['Site_Info']['timestamp']] = pd.to_datetime(self.time)+timedelta(hours=int(self.ini['Site_Info']['utc_offset']))
@@ -188,7 +187,9 @@ class extractNARR():
         for i,row in TS.iterrows():
             TS.loc[TS.index == i, self.var_name] = self.interpolate(self.var_clip[i].flatten())
         TS = TS.set_index(self.ini['Site_Info']['timestamp'])
-        TS = TS.resample(freq).interpolate(method='linear')
+        TS = TS.resample(freq).asfreq()
+        TS[self.var_name+'_interp_linear'] = TS[self.var_name].interpolate(method='linear')
+        TS[self.var_name+'_interp_spline'] = TS[self.var_name].interpolate(method='spline',order=2)
         TS = TS.round(1)
 
         self.Trace = pd.concat([self.Trace,TS])
@@ -230,4 +231,4 @@ if __name__ == '__main__':
     args = CLI.parse_args()
     if args.verbose[0]==1:
         print(args)
-    extractNARR(args.site,args.years,args.verbose[0])
+    PointSampleNARR(args.site[0],args.years,args.verbose[0])
