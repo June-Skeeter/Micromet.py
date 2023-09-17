@@ -5,6 +5,15 @@ import configparser
 import argparse
 import datetime
 
+class Write():
+    def __init__(self,ini='WriteTraces.ini'):
+               
+        # Create a config file based on the job (Write vs. Read; standard vs. custom)
+        self.ini = configparser.ConfigParser()
+        self.ini.read('../MicrometPy.ini')
+        self.ini.read(ini)
+    
+
 class MakeTraces():
 
     def __init__(self,ini='WriteTraces.ini'):
@@ -15,14 +24,14 @@ class MakeTraces():
         self.ini.read(ini)
 
         # Loop through sites
-        Sites =  self.ini['Input']['Sites'].split(',')
-        for self.site in Sites:
-            for self.Match_File in self.ini[self.site]['Files'].split(','):
-                self.findMet()
+        # Sites =  self.ini['Input']['Files'].split(',')
+        # for self.site in Sites:
+        for self.Match_File in self.ini['Input']['Files'].split(','):
+            self.site = self.ini[self.Match_File]['Site']
+            self.findFiles()
 
-    def findMet(self):
-        patterns = self.ini[self.Match_File]['Patterns'].split(',')
-
+    def findFiles(self):
+        patterns = self.ini[self.Match_File]['path_patterns'].split(',')
         self.Met = pd.DataFrame()
         self.Metadata = pd.DataFrame()
         for dir,_,files in os.walk(self.ini['Paths']['datadump'].replace('SITE',self.site)):
@@ -32,7 +41,6 @@ class MakeTraces():
                     if self.ini[self.Match_File]['Subtable_id'] == '':
                         self.readSingle(fn)
                     else:
-                        
                         self.readSubTables(fn)
         self.dateIndex()
         if self.ini[self.Match_File]['Exclude'] != '':
@@ -88,9 +96,8 @@ class MakeTraces():
             Subtable.columns=header.columns
             self.Met = pd.concat([self.Met,Subtable],axis=0)
         
-        
-
     def dateIndex(self):        
+        print(self.Met)
         Date_cols = [i for i in self.ini[self.Match_File]['Date_Cols'].split(',')]
         if self.ini[self.Match_File]['Date_Fmt'] == 'Auto':
             Date_col = Date_cols[0]
@@ -141,7 +148,13 @@ class MakeTraces():
                 T += '_' + self.ini[self.Match_File]['Tag']
             with open(f'{self.write_dir}/{T}','wb') as out:
                 Trace.tofile(out)
+
+class GSheetDump(Write):
+    def __init__(self, ini='WriteTraces_Gsheets.ini'):
+        super().__init__(ini)
         
+
+
 if __name__ == '__main__':
     file_path = os.path.split(__file__)[0]
     os.chdir(file_path)

@@ -19,7 +19,7 @@ os.chdir(file_path)
 os.chdir('..')
 MicrometPy = os.getcwd()
 if MicrometPy not in sys.path:
-    sys.path.insert(0,MicrometPy)
+    sys.path.insert(-1,MicrometPy)
 from Biomet_Database_Functions import WriteDatabase
 os.chdir(file_path)
 
@@ -57,13 +57,13 @@ class PointSampleNARR():
         self.Site = self.Site.to_crs(NARR_LCC)
         
         Vars = self.ini['Downloads']['var_name'].split(',')
-        self.site = self.ini['Site_Info']['name']
+        self.site_name = self.ini['Site_Info']['name']
 
         
         if self.ini['Outputs']['datadump']=='True':
-            self.out_dir = self.ini['Paths']['datadump'].replace('SITE',self.site)+'/'+self.ini['Outputs']['folder_name']
+            self.out_dir = self.ini['Paths']['datadump'].replace('SITE',self.site_name)+'/'+self.ini['Outputs']['folder_name']
         else:
-            self.out_dir = self.ini['Outputs']['datadump'].replace('SITE',self.site)+'/'+self.ini['Outputs']['folder_name']
+            self.out_dir = self.ini['Outputs']['datadump'].replace('SITE',self.site_name)+'/'+self.ini['Outputs']['folder_name']
 
 
         for self.var_name in Vars:
@@ -93,7 +93,7 @@ class PointSampleNARR():
             for self.year in Years:
                 if self.year >=1979 & self.year <= datetime.datetime.now().year:
                     self.check()
-                    print(f'Estimating {self.var_name} for {self.year} at {self.site}')
+                    print(f'Estimating {self.var_name} for {self.year} at {self.site_name}')
                     self.estimate_values()
             
             if os.path.isdir(self.out_dir) is False: os.makedirs(self.out_dir)
@@ -106,6 +106,7 @@ class PointSampleNARR():
                 writer = configparser.ConfigParser()
                 writer.read(self.ini['Outputs']['template'])
                 writer['NARR']['patterns']=self.var_name+',NARR'
+                writer['NARR']['site']=self.site_name
                 
                 with open(self.ini['Outputs']['template'], 'w') as configfile:    # save
                     writer.write(configfile)
@@ -168,7 +169,7 @@ class PointSampleNARR():
         m = folium.Map(location=[self.Site.geometry.y[0],self.Site.geometry.x[0]])   
         for at,on in zip (lat_box.flatten(),lon_box.flatten()):
             folium.Marker([at, on]).add_to(m)
-        folium.CircleMarker([self.Site.geometry.y[0],self.Site.geometry.x[0]],popup=self.site).add_to(m)
+        folium.CircleMarker([self.Site.geometry.y[0],self.Site.geometry.x[0]],popup=self.site_name).add_to(m)
         m.save(f'{self.ini["Downloads"]["nc_path"]}/{self.Site.name[0]}_{self.var_name}_grid_pts.html')
 
         self.x_clip = self.x[self.x_bounds[0]:self.x_bounds[1]]
