@@ -45,19 +45,17 @@ This assumes you have Micromet.py installed in "/home/"
 
 # Creating a New Application
 
-1. Create a new folder in Micromet.py/Python
+1. Create a new folder in Micromet.py
 
-2. Create a new virtual environment following the steps outlined above, **without** installing the requirements.txt
+2. Write your code and install any necessary packages.  **Make sure** you work in the .venv
 
-3. Write your code and install any necessary packages.  **Make sure** you work in a .venv
+3. Write a README.md file :D
 
-4. Write a README.md file :D
-
-5. Push to you own branch of Micromet.py on github
+4. Push to you own branch of Micromet.py on github
 
 # Updating Existing Applications
 
-If any new packages are installed in a given application and you plan to push it to github, you can update the "requirements.txt" file with this command from within the application folder:
+If any new packages are installed for a given application and you plan to push it to github, you can update the "requirements.txt" file with this command from within the MicrometPy folder:
 
     pip freeze > requirements.txt
 
