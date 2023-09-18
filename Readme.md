@@ -4,12 +4,10 @@ Each application is in a separate folder, and each was created in a separate vir
 
 * Its is not explicitly required to use virtual environments, but it is good practice to ensure all dependencies are met and you don't corrupt your base Python installation
 * The root folder of each application has a "requirement.txt" which lists the packages installed in the virtual environment
-    * To install the packages, you can run 'pip install -r Python/requirements.txt'
+    * To install the packages, you can follow the steps listed below
     * It is best to do this in a dedicated virtual environment so you don't run into any conflicts with pre-existing installations in your main python environment.
     * See the instructions below to create a generic virtual environment with pip
 ## Create a virtual environment
-
-These steps are meant to be run via command line from **within** the specific application folder, e.g., Bioment.Net/Biomet_Database_Functions
 
 ### Using Visual Studio (VS) Code
 

@@ -26,7 +26,6 @@ os.chdir(file_path)
 class PointSampleNARR():
     
     def __init__(self,Site,Years,verbose=0):
-        # Create a config file based on the job (Write vs. Read; standard vs. custom)
         self.ini = configparser.ConfigParser()
         self.ini.read('../MicrometPy.ini')
         self.ini.read('configuration.ini')

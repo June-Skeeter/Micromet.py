@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Add a polygon to a map using a GeoJSON source</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<!-- Import Turf Module - Needed to calculate bounding boxes -->
+<script src='https://api.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script>
+<style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+    /* Control the zoom to button */
+    .btn-control {
+        font: bold 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        background-color: #3386c0;
+        color: #fff;
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        z-index: 1;
+        border: none;
+        width: 200px;
+        margin-left: -100px;
+        display: block;
+        cursor: pointer;
+        padding: 10px 20px;
+        border-radius: 3px;
+    }
+    .btn-control:hover {
+        background-color: #4ea0da;
+    }
+</style>
+</head>
+<body>
+<button id="zoomto" class="btn-control">Zoom to Footprint</button>
+<div id="map"></div>
+<script>
+	// Replace access token!
+    mapboxgl.accessToken = 'pk.eyJ1IjoidWJjbWljcm9tZXQiLCJhIjoiY2xmMnJzYzlnMGFsYTNxcW1kYWhubjBiaSJ9.rhIOVatxQoS4M__qIFv6Pg';
+  
+    //  Custom mapStyle lest us use ESRI raster tiles
+    const mapStyle = {
+        version: 8,
+        sources: {
+        worldImagery: {
+            type: "raster",
+            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+            tileSize: 256
+            }
+        },
+        layers: [{
+            id: "worldImagery",
+            type: "raster",
+            source: "worldImagery",
+            minzoom: 0,
+            maxzoom: 22
+            }
+        ]
+    };
+
+    //  Create the map - zoom and center are "arbitrary"
+    const map = new mapboxgl.Map({
+                container: 'map',
+                zoom: 10,
+                center: Tower_Coords, // starting position
+                style: mapStyle,
+                });
+
+    //  Locate the user
+    var geolocate = new mapboxgl.GeolocateControl({
+        positionOptions: {
+        enableHighAccuracy: true
+        },
+        trackUserLocation: true,
+        showUserHeading: true},);
+
+    map.addControl(geolocate);
+    map.addControl(new mapboxgl.NavigationControl());  
+
+    var FP_Contour_Levels = FP_Json
+    
+    var EC_Station = Site_Json
+
+    map.on('load', () => {
+        // Add a data sources containing GeoJSON data.
+
+        // Add a data source containing GeoJSON data.
+        map.addSource('Site_Name', {
+            'type': 'geojson',
+            'data': Site_Json
+        });
+
+        map.addSource('FP_Contour_Levels', {
+            'type': 'geojson',
+            'data': FP_Contour_Levels
+        });
+
+        // Add a new layer to visualize the polygon.
+        map.addLayer({
+            'id': 'FP_Contour_Levels',
+            'type': 'fill',
+            'source': 'FP_Contour_Levels', // reference the data source
+            'layout': {},
+            'paint': {
+                'fill-color': '#f76605', // blue color fill
+                'fill-opacity': 0.15
+                }
+            });
+        // Add a black outline around the polygon.
+        map.addLayer({
+            'id': 'outline',
+            'type': 'line',
+            'source': 'FP_Contour_Levels',
+            'layout': {},
+            'paint': {
+                'line-color': '#000',
+                'line-width': 3
+                }
+            });
+
+        
+        map.addLayer({'id': 'Site_Name',
+                'type': 'circle',
+                'source': 'Site_Name',
+                'filter': ['==', '$type', 'Point'],
+                'paint': {
+                    'circle-radius': 10,
+                    'circle-color': '#9803fc',
+                    "circle-stroke-width": 1,
+                    "circle-stroke-color": 'black'
+                    },
+                });
+
+    });
+
+    map.on('click', 'FP_Contour_Levels', (e) => {
+        new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(e.features[0].properties.Contour_Level)
+            .addTo(map);
+        });
+
+        
+    let bbox = turf.extent(FP_Contour_Levels);
+    
+    // fit zom to the bounding box of whichever layers are loaded
+    function fit() {
+        map.fitBounds(bbox, {maxZoom: 18});
+        };
+
+    fit();
+
+    map.addControl(new mapboxgl.ScaleControl({position: 'bottom-right'}));
+    
+    // Call fit when clicking the zoomto button
+    document.getElementById('zoomto').addEventListener('click', () => {
+        fit()
+    });
+</script>
+
+</body>
+</html>
